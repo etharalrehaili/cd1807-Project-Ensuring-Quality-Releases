@@ -1,28 +1,42 @@
 {
 	"info": {
-		"_postman_id": "7a1e2c40-3b4d-4e2a-9f11-1a2b3c4d5e6f",
-		"name": "Regression Test Suite",
+		"_postman_id": "8b2f3d51-4c5e-4f3b-a022-2b3c4d5e6f70",
+		"name": "Data Validation Test Suite",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Create Author",
+			"name": "Create Author - Validate Response Schema",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "1a2b3c4d-0001-4000-8000-000000000001",
+						"id": "2b3c4d5e-0001-4000-8000-000000000001",
 						"exec": [
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
 							"",
-							"pm.test(\"Response has an id\", function () {",
-							"    var json = pm.response.json();",
-							"    pm.expect(json).to.have.property(\"id\");",
+							"var json = pm.response.json();",
+							"",
+							"pm.test(\"id is a number\", function () {",
+							"    pm.expect(json.id).to.be.a(\"number\");",
 							"});",
 							"",
-							"var json = pm.response.json();",
+							"pm.test(\"idBook is a number\", function () {",
+							"    pm.expect(json.idBook).to.be.a(\"number\");",
+							"});",
+							"",
+							"pm.test(\"firstName is a string and matches request\", function () {",
+							"    pm.expect(json.firstName).to.be.a(\"string\");",
+							"    pm.expect(json.firstName).to.eql(pm.collectionVariables.get(\"firstName\"));",
+							"});",
+							"",
+							"pm.test(\"lastName is a string and matches request\", function () {",
+							"    pm.expect(json.lastName).to.be.a(\"string\");",
+							"    pm.expect(json.lastName).to.eql(pm.collectionVariables.get(\"lastName\"));",
+							"});",
+							"",
 							"pm.collectionVariables.set(\"id\", json.id);"
 						],
 						"type": "text/javascript"
@@ -55,25 +69,39 @@
 			"response": []
 		},
 		{
-			"name": "Get All Authors",
+			"name": "Get All Authors - Validate Field Types",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "1a2b3c4d-0002-4000-8000-000000000002",
+						"id": "2b3c4d5e-0002-4000-8000-000000000002",
 						"exec": [
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
 							"",
-							"pm.test(\"Response is an array\", function () {",
-							"    var json = pm.response.json();",
+							"var json = pm.response.json();",
+							"",
+							"pm.test(\"Response is a non-empty array\", function () {",
 							"    pm.expect(json).to.be.an(\"array\");",
+							"    pm.expect(json.length).to.be.above(0);",
 							"});",
 							"",
-							"pm.test(\"Array is not empty\", function () {",
-							"    var json = pm.response.json();",
-							"    pm.expect(json.length).to.be.above(0);",
+							"pm.test(\"Every author has correctly typed fields\", function () {",
+							"    json.forEach(function (author) {",
+							"        pm.expect(author).to.have.property(\"id\");",
+							"        pm.expect(author.id).to.be.a(\"number\");",
+							"        pm.expect(author).to.have.property(\"idBook\");",
+							"        pm.expect(author.idBook).to.be.a(\"number\");",
+							"        pm.expect(author).to.have.property(\"firstName\");",
+							"        pm.expect(author.firstName).to.satisfy(function (v) {",
+							"            return v === null || typeof v === \"string\";",
+							"        });",
+							"        pm.expect(author).to.have.property(\"lastName\");",
+							"        pm.expect(author.lastName).to.satisfy(function (v) {",
+							"            return v === null || typeof v === \"string\";",
+							"        });",
+							"    });",
 							"});"
 						],
 						"type": "text/javascript"
@@ -92,20 +120,26 @@
 			"response": []
 		},
 		{
-			"name": "Get Author By Id",
+			"name": "Get Author By Id - Validate Response Schema",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "1a2b3c4d-0003-4000-8000-000000000003",
+						"id": "2b3c4d5e-0003-4000-8000-000000000003",
 						"exec": [
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
 							"",
-							"pm.test(\"Returned id matches requested id\", function () {",
-							"    var json = pm.response.json();",
-							"    pm.expect(String(json.id)).to.eql(String(pm.collectionVariables.get(\"id\")));",
+							"var json = pm.response.json();",
+							"",
+							"pm.test(\"Response has exactly the expected keys\", function () {",
+							"    pm.expect(Object.keys(json).sort()).to.eql([\"firstName\", \"id\", \"idBook\", \"lastName\"].sort());",
+							"});",
+							"",
+							"pm.test(\"id matches requested id and is a number\", function () {",
+							"    pm.expect(json.id).to.be.a(\"number\");",
+							"    pm.expect(String(json.id)).to.eql(String(pm.collectionVariables.get(\"authorId\")));",
 							"});"
 						],
 						"type": "text/javascript"
@@ -116,82 +150,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}/api/v1/Authors/{{id}}",
+					"raw": "{{baseUrl}}/api/v1/Authors/{{authorId}}",
 					"host": ["{{baseUrl}}"],
-					"path": ["api", "v1", "Authors", "{{id}}"]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Update Author",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "1a2b3c4d-0004-4000-8000-000000000004",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Updated firstName is reflected in response\", function () {",
-							"    var json = pm.response.json();",
-							"    pm.expect(json.firstName).to.eql(pm.collectionVariables.get(\"updatedFirstName\"));",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "PUT",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"id\": {{id}},\n    \"idBook\": 0,\n    \"firstName\": \"{{updatedFirstName}}\",\n    \"lastName\": \"{{lastName}}\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/v1/Authors/{{id}}",
-					"host": ["{{baseUrl}}"],
-					"path": ["api", "v1", "Authors", "{{id}}"]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Delete Author",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "1a2b3c4d-0005-4000-8000-000000000005",
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/api/v1/Authors/{{id}}",
-					"host": ["{{baseUrl}}"],
-					"path": ["api", "v1", "Authors", "{{id}}"]
+					"path": ["api", "v1", "Authors", "{{authorId}}"]
 				}
 			},
 			"response": []
@@ -201,7 +162,7 @@
 		{ "key": "baseUrl", "value": "https://fakerestapi.azurewebsites.net" },
 		{ "key": "firstName", "value": "Ethar" },
 		{ "key": "lastName", "value": "Alrehaili" },
-		{ "key": "updatedFirstName", "value": "EtharUpdated" }
+		{ "key": "authorId", "value": "1" }
 	],
 	"protocolProfileBehavior": {}
 }
