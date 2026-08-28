@@ -26,3 +26,7 @@ override.tf.json
 
 terraform/environments/test/terraform.tfvars
 tfplan
+
+# Explicitly track these Postman test suite collections despite the *.json ignore rule above
+!automatedtesting/postman/RegressionTestSuite.json
+!automatedtesting/postman/DataValidationTestSuite.json
