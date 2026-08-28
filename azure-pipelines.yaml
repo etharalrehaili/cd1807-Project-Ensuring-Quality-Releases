@@ -112,3 +112,68 @@ stages:
         testResultsFormat: 'JUnit'
         testResultsFiles: '$(System.DefaultWorkingDirectory)/TestResults/*.xml'
         failTaskOnFailedTests: true
+
+#--------------------------------------------#
+# PACKAGE STAGE (Archive + Publish artifacts)
+#--------------------------------------------#
+- stage: Package
+  dependsOn: Build
+  jobs:
+  - job: ArchiveAndPublish
+    steps:
+    - task: ArchiveFiles@2
+      displayName: 'Archive FakeRestAPI'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/jmeter/fakerestapi'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/fakerestapi.zip'
+        replaceExistingArchive: true
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive Selenium Test Suite'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/selenium'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/selenium.zip'
+        replaceExistingArchive: true
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive JMeter Test Suite'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/jmeter/test-suite'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/jmeter-test-suite.zip'
+        replaceExistingArchive: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifacts'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+#--------------------------------------------#
+# DEPLOY STAGE
+#--------------------------------------------#
+- stage: Deploy
+  dependsOn: Package
+  jobs:
+  - deployment: DeployFakeRestAPI
+    displayName: 'Deploy FakeRestAPI to App Service'
+    environment: 'quality-releases-vm-env'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            displayName: 'Deploy to App Service'
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              appType: 'webApp'
+              appName: 'quality-releases-appservice'
+              package: '$(Pipeline.Workspace)/drop/fakerestapi.zip'
