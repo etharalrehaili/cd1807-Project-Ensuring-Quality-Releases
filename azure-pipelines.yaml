@@ -78,3 +78,37 @@ stages:
         command: 'apply'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+
+#--------------------------------------------#
+# INTEGRATION TESTING STAGE (Postman/Newman)
+#--------------------------------------------#
+- stage: PostmanTests
+  dependsOn: Build
+  jobs:
+  - job: RunPostmanTests
+    steps:
+    - task: Npm@1
+      displayName: 'Install Newman'
+      inputs:
+        command: 'custom'
+        customCommand: 'install -g newman'
+
+    - script: |
+        mkdir -p $(System.DefaultWorkingDirectory)/TestResults
+        newman run automatedtesting/postman/RegressionTestSuite.json \
+          --reporters cli,junit \
+          --reporter-junit-export $(System.DefaultWorkingDirectory)/TestResults/regression-results.xml
+      displayName: 'Run Regression Test Suite'
+
+    - script: |
+        newman run automatedtesting/postman/DataValidationTestSuite.json \
+          --reporters cli,junit \
+          --reporter-junit-export $(System.DefaultWorkingDirectory)/TestResults/data-validation-results.xml
+      displayName: 'Run Data Validation Test Suite'
+
+    - task: PublishTestResults@2
+      displayName: 'Publish Postman Test Results'
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '$(System.DefaultWorkingDirectory)/TestResults/*.xml'
+        failTaskOnFailedTests: true
