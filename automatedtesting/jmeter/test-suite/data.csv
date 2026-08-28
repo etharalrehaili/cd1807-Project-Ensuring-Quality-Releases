@@ -1,0 +1,6 @@
+endpoint
+/api/Activities
+/api/Authors
+/api/Books
+/api/CoverPhotos
+/api/Users
