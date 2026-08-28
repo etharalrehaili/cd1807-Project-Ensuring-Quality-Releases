@@ -47,6 +47,29 @@ stages:
         command: 'validate'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
 
+    # Generate terraform.tfvars from pipeline variables
+    - task: Bash@3
+      displayName: 'Generate terraform.tfvars'
+      inputs:
+        targetType: 'inline'
+        script: |
+          cat > $(System.DefaultWorkingDirectory)/terraform/environments/test/pipeline.auto.tfvars <<EOF
+          subscription_id = "$(armSubscriptionId)"
+          client_id = "$(armClientId)"
+          client_secret = "$CLIENT_SECRET"
+          tenant_id = "$TENANT_ID"
+          location = "$(tfLocation)"
+          resource_group = "$(tfResourceGroup)"
+          application_type = "$(tfApplicationType)"
+          virtual_network_name = "$(tfVnetName)"
+          address_space = $(tfAddressSpace)
+          address_prefix_test = "$(tfAddressPrefixTest)"
+          admin_username = "$(tfAdminUsername)"
+          EOF
+      env:
+        CLIENT_SECRET: $(armClientSecret)
+        TENANT_ID: $(armTenantId)
+
     # Run Terraform Apply
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
       displayName: Terraform apply
@@ -55,15 +78,3 @@ stages:
         command: 'apply'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
-      env:
-        TF_VAR_subscription_id: $(armSubscriptionId)
-        TF_VAR_client_id: $(armClientId)
-        TF_VAR_client_secret: $(armClientSecret)
-        TF_VAR_tenant_id: $(armTenantId)
-        TF_VAR_location: $(tfLocation)
-        TF_VAR_resource_group: $(tfResourceGroup)
-        TF_VAR_application_type: $(tfApplicationType)
-        TF_VAR_virtual_network_name: $(tfVnetName)
-        TF_VAR_address_space: $(tfAddressSpace)
-        TF_VAR_address_prefix_test: $(tfAddressPrefixTest)
-        TF_VAR_admin_username: $(tfAdminUsername)
