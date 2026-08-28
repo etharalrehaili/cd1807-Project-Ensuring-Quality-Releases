@@ -22,4 +22,7 @@ crash.log
 override.tf
 override.tf.json
 *_override.tf
-*_override.tf.json
+*_override.tf.jsonterraform/environments/test/terraform.tfvars
+
+terraform/environments/test/terraform.tfvars
+tfplan
