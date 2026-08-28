@@ -55,3 +55,15 @@ stages:
         command: 'apply'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+      env:
+        TF_VAR_subscription_id: $(armSubscriptionId)
+        TF_VAR_client_id: $(armClientId)
+        TF_VAR_client_secret: $(armClientSecret)
+        TF_VAR_tenant_id: $(armTenantId)
+        TF_VAR_location: $(tfLocation)
+        TF_VAR_resource_group: $(tfResourceGroup)
+        TF_VAR_application_type: $(tfApplicationType)
+        TF_VAR_virtual_network_name: $(tfVnetName)
+        TF_VAR_address_space: $(tfAddressSpace)
+        TF_VAR_address_prefix_test: $(tfAddressPrefixTest)
+        TF_VAR_admin_username: $(tfAdminUsername)
