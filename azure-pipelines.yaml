@@ -217,3 +217,47 @@ stages:
               PathtoPublish: '$(Agent.BuildDirectory)/selenium-run/selenium-test-output.log'
               ArtifactName: 'selenium-logs'
               publishLocation: 'Container'
+
+#--------------------------------------------#
+# PERFORMANCE TESTING STAGE (JMeter)
+#--------------------------------------------#
+- stage: JMeterTests
+  dependsOn: Deploy
+  jobs:
+  - job: RunJMeterTests
+    steps:
+    - script: |
+        sudo apt-get update -y
+        sudo apt-get install -y default-jre unzip wget
+        wget -q https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+        tar -xzf apache-jmeter-5.6.3.tgz
+      displayName: 'Install JMeter'
+
+    - script: |
+        mkdir -p $(System.DefaultWorkingDirectory)/jmeter-results
+        cd automatedtesting/jmeter/test-suite
+        $(System.DefaultWorkingDirectory)/apache-jmeter-5.6.3/bin/jmeter -n -t StressTestSuite.jmx \
+          -JAPPSERVICEURL=quality-releases-appservice.azurewebsites.net \
+          -Jusers=2 -Jduration=60 \
+          -JresultsFile=$(System.DefaultWorkingDirectory)/jmeter-results/stress-results.jtl
+      displayName: 'Run JMeter Stress Test Suite'
+
+    - script: |
+        cd automatedtesting/jmeter/test-suite
+        $(System.DefaultWorkingDirectory)/apache-jmeter-5.6.3/bin/jmeter -n -t EnduranceTestSuite.jmx \
+          -JAPPSERVICEURL=quality-releases-appservice.azurewebsites.net \
+          -Jusers=2 -Jduration=60 \
+          -JresultsFile=$(System.DefaultWorkingDirectory)/jmeter-results/endurance-results.jtl
+      displayName: 'Run JMeter Endurance Test Suite'
+
+    - script: |
+        $(System.DefaultWorkingDirectory)/apache-jmeter-5.6.3/bin/jmeter -g $(System.DefaultWorkingDirectory)/jmeter-results/stress-results.jtl -o $(System.DefaultWorkingDirectory)/jmeter-results/stress-html-report
+        $(System.DefaultWorkingDirectory)/apache-jmeter-5.6.3/bin/jmeter -g $(System.DefaultWorkingDirectory)/jmeter-results/endurance-results.jtl -o $(System.DefaultWorkingDirectory)/jmeter-results/endurance-html-report
+      displayName: 'Generate JMeter HTML Reports'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish JMeter Results'
+      inputs:
+        PathtoPublish: '$(System.DefaultWorkingDirectory)/jmeter-results'
+        ArtifactName: 'jmeter-results'
+        publishLocation: 'Container'
