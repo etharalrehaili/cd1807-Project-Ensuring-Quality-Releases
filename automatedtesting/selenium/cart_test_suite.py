@@ -17,6 +17,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+import os
 import time
 
 SITE_URL = "https://www.saucedemo.com/"
@@ -26,6 +28,17 @@ PASSWORD = "secret_sauce"
 
 def log(message):
     print(f"[TEST] {message}")
+
+
+def build_driver():
+    options = ChromeOptions()
+    if os.environ.get("HEADLESS", "false").lower() == "true":
+        log("Running in headless mode (HEADLESS=true)")
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--window-size=1920,1080")
+    return webdriver.Chrome(options=options)
 
 
 def login(driver, wait):
@@ -91,7 +104,7 @@ def remove_all_products_from_cart(driver, wait):
 
 def main():
     log("Starting Selenium test suite: add all products to cart, then remove them")
-    driver = webdriver.Chrome()
+    driver = build_driver()
     driver.maximize_window()
     wait = WebDriverWait(driver, 10)
 

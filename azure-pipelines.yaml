@@ -177,3 +177,38 @@ stages:
               appType: 'webApp'
               appName: 'quality-releases-appservice'
               package: '$(Pipeline.Workspace)/drop/fakerestapi.zip'
+  - deployment: DeploySeleniumToVM
+    displayName: 'Deploy and Run Selenium Tests on VM'
+    environment:
+      name: 'quality-releases-vm-env'
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: |
+              sudo apt-get update -y
+              if ! command -v google-chrome &> /dev/null; then
+                wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+                sudo apt-get install -y /tmp/chrome.deb
+              fi
+              pip3 install --upgrade selenium
+            displayName: 'Install Chrome and Selenium dependencies'
+
+          - script: |
+              mkdir -p $(Agent.BuildDirectory)/selenium-run
+              unzip -o $(Pipeline.Workspace)/drop/selenium.zip -d $(Agent.BuildDirectory)/selenium-run
+            displayName: 'Unpack Selenium test suite'
+
+          - script: |
+              cd $(Agent.BuildDirectory)/selenium-run
+              export HEADLESS=true
+              python3 cart_test_suite.py | tee selenium-test-output.log
+            displayName: 'Run Selenium cart test suite'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Selenium test log'
+            inputs:
+              PathtoPublish: '$(Agent.BuildDirectory)/selenium-run/selenium-test-output.log'
+              ArtifactName: 'selenium-logs'
+              publishLocation: 'Container'
