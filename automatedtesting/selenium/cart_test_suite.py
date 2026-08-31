@@ -89,6 +89,7 @@ def remove_all_products_from_cart(driver, wait):
             continue
         item_name = item.find_element(By.CSS_SELECTOR, ".inventory_item_name").text
         remove_buttons[0].click()
+        time.sleep(0.5)
         log(f"Removed from cart: {item_name}")
         total_to_remove += 1
 
