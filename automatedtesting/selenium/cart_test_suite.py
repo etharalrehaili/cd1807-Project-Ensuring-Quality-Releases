@@ -89,11 +89,20 @@ def remove_all_products_from_cart(driver, wait):
             continue
         item_name = item.find_element(By.CSS_SELECTOR, ".inventory_item_name").text
         remove_buttons[0].click()
-        time.sleep(0.5)
+        WebDriverWait(driver, 5).until(
+            lambda d: len(item.find_elements(By.CSS_SELECTOR, "button[id^='add-to-cart-']")) > 0
+        )
         log(f"Removed from cart: {item_name}")
         total_to_remove += 1
 
     log(f"Removed {total_to_remove} product(s) from the cart")
+
+    try:
+        WebDriverWait(driver, 5).until(
+            EC.invisibility_of_element_located((By.CSS_SELECTOR, ".shopping_cart_badge"))
+        )
+    except Exception:
+        pass
 
     cart_badges = driver.find_elements(By.CSS_SELECTOR, ".shopping_cart_badge")
     if len(cart_badges) == 0:
