@@ -80,30 +80,23 @@ def add_all_products_to_cart(driver, wait):
 
 
 def remove_all_products_from_cart(driver, wait):
-    inventory_items = driver.find_elements(By.CSS_SELECTOR, ".inventory_item")
-    total_to_remove = 0
+    removed_count = 0
 
-    for item in inventory_items:
-        remove_buttons = item.find_elements(By.CSS_SELECTOR, "button[id^='remove-']")
+    while True:
+        remove_buttons = driver.find_elements(By.CSS_SELECTOR, "button[id^='remove-']")
         if not remove_buttons:
-            continue
-        item_name = item.find_element(By.CSS_SELECTOR, ".inventory_item_name").text
-        remove_buttons[0].click()
-        WebDriverWait(driver, 5).until(
-            lambda d: len(item.find_elements(By.CSS_SELECTOR, "button[id^='add-to-cart-']")) > 0
-        )
+            break
+        button = remove_buttons[0]
+        item_container = button.find_element(By.XPATH, "./ancestor::div[@class='inventory_item']")
+        item_name = item_container.find_element(By.CSS_SELECTOR, ".inventory_item_name").text
+        driver.execute_script("arguments[0].click();", button)
+        time.sleep(1)
+        removed_count += 1
         log(f"Removed from cart: {item_name}")
-        total_to_remove += 1
 
-    log(f"Removed {total_to_remove} product(s) from the cart")
+    log(f"Removed {removed_count} product(s) from the cart")
 
-    try:
-        WebDriverWait(driver, 5).until(
-            EC.invisibility_of_element_located((By.CSS_SELECTOR, ".shopping_cart_badge"))
-        )
-    except Exception:
-        pass
-
+    time.sleep(1)
     cart_badges = driver.find_elements(By.CSS_SELECTOR, ".shopping_cart_badge")
     if len(cart_badges) == 0:
         log("PASS: Cart is empty, no badge displayed")
