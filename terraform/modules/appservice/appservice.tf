@@ -3,7 +3,7 @@ resource "azurerm_service_plan" "test" {
   location            = "${var.location}"
   resource_group_name = "${var.resource_group}"
   os_type             = "Windows"
-  sku_name            = "F1"
+  sku_name            = "B1"
   tags = {
     project = "cd1807-quality-releases"
   }
